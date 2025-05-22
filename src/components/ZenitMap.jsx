@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
 const MapGrid = styled.div`
@@ -15,23 +15,31 @@ const MapGrid = styled.div`
 const Cell = styled.div`
   width: 30px;
   height: 30px;
-  background-color: ${({ isRobot }) => (isRobot ? "limegreen" : "white")};
+  background-color: ${({ isRobot, isVisited }) =>
+    isRobot ? "limegreen" : isVisited ? "#bbb" : "white"};
   border: 1px solid #aaa;
 `;
 
 const ZenitMap = ({ robotPosition }) => {
-  const totalCells = 20 * 20;
+  const [visited, setVisited] = useState([]);
 
-  const getIndex = (x, y) => y * 20 + x;
+  useEffect(() => {
+    const posKey = `${robotPosition.x},${robotPosition.y}`;
+    setVisited((prev) => (prev.includes(posKey) ? prev : [...prev, posKey]));
+  }, [robotPosition]);
+
+  const totalCells = 20 * 20;
 
   return (
     <MapGrid>
       {Array.from({ length: totalCells }).map((_, index) => {
         const x = index % 20;
         const y = Math.floor(index / 20);
+        const key = `${x},${y}`;
         const isRobot = x === robotPosition.x && y === robotPosition.y;
+        const isVisited = visited.includes(key) && !isRobot;
 
-        return <Cell key={index} isRobot={isRobot} />;
+        return <Cell key={index} isRobot={isRobot} isVisited={isVisited} />;
       })}
     </MapGrid>
   );
