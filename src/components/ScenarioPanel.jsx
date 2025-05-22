@@ -39,6 +39,15 @@ const Button = styled.button`
   &:hover {
     background-color: #059669;
   }
+
+  &.next {
+    background-color: #3b82f6;
+    margin-top: 10px;
+
+    &:hover {
+      background-color: #2563eb;
+    }
+  }
 `;
 
 const List = styled.ul`
@@ -49,15 +58,17 @@ const List = styled.ul`
 
 const ListItem = styled.li`
   margin-bottom: 8px;
-  background-color: #f3f4f6;
+  background-color: ${({ isActive }) => (isActive ? "#d1fae5" : "#f3f4f6")};
   padding: 8px;
   border-radius: 6px;
+  font-weight: ${({ isActive }) => (isActive ? "bold" : "normal")};
 `;
 
 const ScenarioPanel = () => {
   const [point, setPoint] = useState("");
   const [action, setAction] = useState("al");
   const [tasks, setTasks] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const handleAdd = () => {
     if (!point) {
@@ -65,11 +76,19 @@ const ScenarioPanel = () => {
       return;
     }
 
-    const task = { nokta: point, islem: action };
+    const task = { nokta: point.toUpperCase(), islem: action };
     setTasks([...tasks, task]);
     setPoint("");
     setAction("al");
     toast.success("Görev eklendi!");
+  };
+
+  const handleNext = () => {
+    if (currentStep + 1 < tasks.length) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      toast.info("🎉 Tüm görevler tamamlandı!");
+    }
   };
 
   return (
@@ -89,13 +108,20 @@ const ScenarioPanel = () => {
         <Button onClick={handleAdd}>Ekle</Button>
       </Row>
 
-      <List>
-        {tasks.map((t, index) => (
-          <ListItem key={index}>
-            {index + 1}. Nokta: {t.nokta.toUpperCase()}, İşlem: {t.islem.toUpperCase()}
-          </ListItem>
-        ))}
-      </List>
+      {tasks.length > 0 && (
+        <>
+          <List>
+            {tasks.map((t, index) => (
+              <ListItem key={index} isActive={index === currentStep}>
+                {index + 1}. Nokta: {t.nokta}, İşlem: {t.islem.toUpperCase()}
+              </ListItem>
+            ))}
+          </List>
+          <Button className="next" onClick={handleNext}>
+            Sonraki Adım
+          </Button>
+        </>
+      )}
     </Panel>
   );
 };
