@@ -18,7 +18,10 @@ const Content = styled.div`
   flex: 1;
   background-color: #f4f6fa;
   padding: 20px;
+  overflow-y: auto;
+  width: 100%;
 `;
+
 
 const NavLink = styled(Link)`
   display: block;
