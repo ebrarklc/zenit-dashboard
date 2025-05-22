@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ZenitMap from "../components/ZenitMap";
 import JoystickPanel from "../components/JoystickPanel";
+import EmergencyPanel from "../components/EmergencyPanel";
 
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 10, y: 10 });
@@ -44,6 +45,8 @@ const MapPage = () => {
         onTurnRight={turnRight}
         onStop={stop}
       />
+      <EmergencyPanel />
+
     </div>
   );
 };

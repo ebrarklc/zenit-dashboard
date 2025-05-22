@@ -4,6 +4,9 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import StatusPage from "./pages/StatusPage";
 import MapPage from "./pages/MapPage";
 import ScenarioPage from "./pages/ScenarioPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 const App = () => {
   return (
@@ -15,6 +18,8 @@ const App = () => {
           <Route path="scenario" element={<ScenarioPage />} />
         </Route>
       </Routes>
+      <ToastContainer position="top-center" />
+
     </Router>
   );
 };
