@@ -4,8 +4,10 @@ import styled from "styled-components";
 
 const LayoutWrapper = styled.div`
   display: flex;
+  width: 100vw;
   height: 100vh;
 `;
+
 
 const Sidebar = styled.div`
   width: 220px;
@@ -17,9 +19,8 @@ const Sidebar = styled.div`
 const Content = styled.div`
   flex: 1;
   background-color: #f4f6fa;
-  padding: 20px;
+  padding: 40px;
   overflow-y: auto;
-  width: 100%;
 `;
 
 

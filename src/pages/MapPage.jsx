@@ -1,44 +1,72 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ZenitMap from "../components/ZenitMap";
 import JoystickPanel from "../components/JoystickPanel";
 import EmergencyPanel from "../components/EmergencyPanel";
 
 const MapPage = () => {
-  const [position, setPosition] = useState({ x: 10, y: 10 });
+  const [position, setPosition] = useState({ x: 1, y: 1 });
+  const [visited, setVisited] = useState([]);
   const [direction, setDirection] = useState("N");
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Simüle görev noktaları
+  const scenario = [
+    { nokta: "A5", islem: "al" },
+    { nokta: "G6", islem: "birak" },
+    { nokta: "B9", islem: "al" },
+  ];
+
+  const parsePoint = (p) => {
+    const letter = p.nokta[0].toUpperCase();
+    const number = parseInt(p.nokta.slice(1));
+    return {
+      x: letter.charCodeAt(0) - 65,
+      y: number - 1
+    };
+  };
+
+  const taskPoints = scenario.map(parsePoint);
+  const activeTask = taskPoints[currentStep];
 
   const moveForward = () => {
     setPosition((prev) => {
-      switch (direction) {
-        case "N": return { ...prev, y: Math.max(prev.y - 1, 0) };
-        case "S": return { ...prev, y: Math.min(prev.y + 1, 19) };
-        case "E": return { ...prev, x: Math.min(prev.x + 1, 19) };
-        case "W": return { ...prev, x: Math.max(prev.x - 1, 0) };
-        default: return prev;
-      }
+      const newPos = { ...prev };
+      if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
+      if (direction === "S") newPos.y = Math.min(prev.y + 1, 19);
+      if (direction === "E") newPos.x = Math.min(prev.x + 1, 19);
+      if (direction === "W") newPos.x = Math.max(prev.x - 1, 0);
+      return newPos;
     });
   };
 
   const turnLeft = () => {
-    const directions = ["N", "W", "S", "E"];
-    const index = directions.indexOf(direction);
-    setDirection(directions[(index + 1) % 4]);
+    const dirs = ["N", "W", "S", "E"];
+    setDirection((d) => dirs[(dirs.indexOf(d) + 1) % 4]);
   };
 
   const turnRight = () => {
-    const directions = ["N", "E", "S", "W"];
-    const index = directions.indexOf(direction);
-    setDirection(directions[(index + 1) % 4]);
+    const dirs = ["N", "E", "S", "W"];
+    setDirection((d) => dirs[(dirs.indexOf(d) + 1) % 4]);
   };
 
-  const stop = () => {
-    alert("Robot durduruldu.");
-  };
+  const stop = () => alert("Robot durdu.");
+
+  useEffect(() => {
+    const key = `${position.x},${position.y}`;
+    setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
+  }, [position]);
 
   return (
     <div>
-      <h2 style={{ textAlign: "center" }}>Harita (Yön: {direction})</h2>
-      <ZenitMap robotPosition={position} />
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        Harita (Yön: {direction})
+      </h2>
+      <ZenitMap
+        robotPosition={position}
+        visited={visited}
+        taskPoints={taskPoints}
+        activeTask={activeTask}
+      />
       <JoystickPanel
         onForward={moveForward}
         onTurnLeft={turnLeft}
@@ -46,7 +74,6 @@ const MapPage = () => {
         onStop={stop}
       />
       <EmergencyPanel />
-
     </div>
   );
 };

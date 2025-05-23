@@ -15,19 +15,16 @@ const MapGrid = styled.div`
 const Cell = styled.div`
   width: 30px;
   height: 30px;
-  background-color: ${({ isRobot, isVisited }) =>
-    isRobot ? "limegreen" : isVisited ? "#bbb" : "white"};
+  background-color: ${({ isRobot, isVisited, isTask, isActiveTask }) =>
+    isRobot ? "limegreen"
+    : isActiveTask ? "#60a5fa"
+    : isTask ? "#fbbf24"
+    : isVisited ? "#e5e7eb"
+    : "white"};
   border: 1px solid #aaa;
 `;
 
-const ZenitMap = ({ robotPosition }) => {
-  const [visited, setVisited] = useState([]);
-
-  useEffect(() => {
-    const posKey = `${robotPosition.x},${robotPosition.y}`;
-    setVisited((prev) => (prev.includes(posKey) ? prev : [...prev, posKey]));
-  }, [robotPosition]);
-
+const ZenitMap = ({ robotPosition, visited, taskPoints = [], activeTask }) => {
   const totalCells = 20 * 20;
 
   return (
@@ -39,7 +36,19 @@ const ZenitMap = ({ robotPosition }) => {
         const isRobot = x === robotPosition.x && y === robotPosition.y;
         const isVisited = visited.includes(key) && !isRobot;
 
-        return <Cell key={index} isRobot={isRobot} isVisited={isVisited} />;
+        const taskMatch = taskPoints.find(p => p.x === x && p.y === y);
+        const isActiveTask = activeTask && activeTask.x === x && activeTask.y === y;
+        const isTask = !!taskMatch;
+
+        return (
+          <Cell
+            key={index}
+            isRobot={isRobot}
+            isVisited={isVisited}
+            isTask={isTask}
+            isActiveTask={isActiveTask}
+          />
+        );
       })}
     </MapGrid>
   );
