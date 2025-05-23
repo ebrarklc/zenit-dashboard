@@ -57,6 +57,11 @@ const StatusPanel = ({ data }) => {
         <Title>RFID</Title>
         <Value>{data.rfid}</Value>
       </Card>
+      <Card>
+  <Title>Yük Taşıyor</Title>
+  <Value>{data.carrying ? "Evet" : "Hayır"}</Value>
+</Card>
+
     </Grid>
   );
 };

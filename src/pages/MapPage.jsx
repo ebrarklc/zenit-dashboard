@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import ZenitMap from "../components/ZenitMap";
 import JoystickPanel from "../components/JoystickPanel";
 import EmergencyPanel from "../components/EmergencyPanel";
+import StatusPanel from "../components/StatusPanel";
 
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 1, y: 1 });
   const [visited, setVisited] = useState([]);
   const [direction, setDirection] = useState("N");
   const [currentStep, setCurrentStep] = useState(0);
+  const [carrying, setCarrying] = useState(false);
+
 
   // Simüle görev noktaları
   const scenario = [
@@ -51,10 +54,27 @@ const MapPage = () => {
 
   const stop = () => alert("Robot durdu.");
 
-  useEffect(() => {
-    const key = `${position.x},${position.y}`;
-    setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
-  }, [position]);
+ useEffect(() => {
+  const key = `${position.x},${position.y}`;
+  setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
+
+  const currentTask = scenario[currentStep];
+  const taskCoords = parsePoint(currentTask);
+
+  // Aktif görev noktasına ulaşıldıysa
+  if (position.x === taskCoords.x && position.y === taskCoords.y) {
+    if (currentTask.islem === "al") {
+      setCarrying(true);
+    } else if (currentTask.islem === "birak") {
+      setCarrying(false);
+    }
+
+    if (currentStep + 1 < scenario.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  }
+}, [position]);
+
 
   return (
     <div>
@@ -67,6 +87,20 @@ const MapPage = () => {
         taskPoints={taskPoints}
         activeTask={activeTask}
       />
+      <StatusPanel
+  data={{
+    battery: 72,
+    charging: false,
+    barrier: false,
+    x: position.x,
+    y: position.y,
+    direction: direction,
+    qr: "QA4.1",
+    rfid: "TAG-123456",
+    carrying: carrying,
+  }}
+/>
+
       <JoystickPanel
         onForward={moveForward}
         onTurnLeft={turnLeft}
