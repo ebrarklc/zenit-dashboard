@@ -3,6 +3,7 @@ import ZenitMap from "../components/ZenitMap";
 import JoystickPanel from "../components/JoystickPanel";
 import EmergencyPanel from "../components/EmergencyPanel";
 import StatusPanel from "../components/StatusPanel";
+import LogPanel from "../components/LogPanel";
 
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 1, y: 1 });
@@ -10,6 +11,8 @@ const MapPage = () => {
   const [direction, setDirection] = useState("N");
   const [currentStep, setCurrentStep] = useState(0);
   const [carrying, setCarrying] = useState(false);
+  const [logs, setLogs] = useState([]);
+
 
 
   // Simüle görev noktaları
@@ -31,21 +34,29 @@ const MapPage = () => {
   const taskPoints = scenario.map(parsePoint);
   const activeTask = taskPoints[currentStep];
 
-  const moveForward = () => {
-    setPosition((prev) => {
-      const newPos = { ...prev };
-      if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
-      if (direction === "S") newPos.y = Math.min(prev.y + 1, 19);
-      if (direction === "E") newPos.x = Math.min(prev.x + 1, 19);
-      if (direction === "W") newPos.x = Math.max(prev.x - 1, 0);
-      return newPos;
-    });
-  };
+const moveForward = () => {
+  setPosition((prev) => {
+    let newPos = { ...prev };
+    if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
+    if (direction === "S") newPos.y = Math.min(prev.y + 1, 19);
+    if (direction === "E") newPos.x = Math.min(prev.x + 1, 19);
+    if (direction === "W") newPos.x = Math.max(prev.x - 1, 0);
+    if (newPos.x !== prev.x || newPos.y !== prev.y) {
+      addLog(`Pozisyon değişti: (${newPos.x}, ${newPos.y})`);
+    }
+    return newPos;
+  });
+};
 
   const turnLeft = () => {
-    const dirs = ["N", "W", "S", "E"];
-    setDirection((d) => dirs[(dirs.indexOf(d) + 1) % 4]);
-  };
+  const dirs = ["N", "W", "S", "E"];
+  setDirection((d) => {
+    const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
+    addLog(`Yön değişti: ${newDir}`);
+    return newDir;
+  });
+};
+
 
   const turnRight = () => {
     const dirs = ["N", "E", "S", "W"];
@@ -54,6 +65,11 @@ const MapPage = () => {
 
   const stop = () => alert("Robot durdu.");
 
+  const addLog = (message) => {
+  setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} - ${message}`]);
+};
+
+
  useEffect(() => {
   const key = `${position.x},${position.y}`;
   setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
@@ -61,18 +77,21 @@ const MapPage = () => {
   const currentTask = scenario[currentStep];
   const taskCoords = parsePoint(currentTask);
 
-  // Aktif görev noktasına ulaşıldıysa
-  if (position.x === taskCoords.x && position.y === taskCoords.y) {
-    if (currentTask.islem === "al") {
-      setCarrying(true);
-    } else if (currentTask.islem === "birak") {
-      setCarrying(false);
-    }
-
-    if (currentStep + 1 < scenario.length) {
-      setCurrentStep(currentStep + 1);
-    }
+ if (position.x === taskCoords.x && position.y === taskCoords.y) {
+  if (currentTask.islem === "al") {
+    setCarrying(true);
+    addLog(`Yük alındı: ${currentTask.nokta}`);
+  } else if (currentTask.islem === "birak") {
+    setCarrying(false);
+    addLog(`Yük bırakıldı: ${currentTask.nokta}`);
   }
+
+  if (currentStep + 1 < scenario.length) {
+    setCurrentStep(currentStep + 1);
+    addLog(`Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`);
+  }
+}
+
 }, [position]);
 
 
@@ -108,6 +127,7 @@ const MapPage = () => {
         onStop={stop}
       />
       <EmergencyPanel />
+      <LogPanel logs={logs} />
     </div>
   );
 };
