@@ -12,10 +12,9 @@ const MapPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [carrying, setCarrying] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [qr, setQr] = useState("YOK");
+  const [rfid, setRfid] = useState("YOK");
 
-
-
-  // Simüle görev noktaları
   const scenario = [
     { nokta: "A5", islem: "al" },
     { nokta: "G6", islem: "birak" },
@@ -34,66 +33,81 @@ const MapPage = () => {
   const taskPoints = scenario.map(parsePoint);
   const activeTask = taskPoints[currentStep];
 
-const moveForward = () => {
-  setPosition((prev) => {
-    let newPos = { ...prev };
-    if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
-    if (direction === "S") newPos.y = Math.min(prev.y + 1, 19);
-    if (direction === "E") newPos.x = Math.min(prev.x + 1, 19);
-    if (direction === "W") newPos.x = Math.max(prev.x - 1, 0);
-    if (newPos.x !== prev.x || newPos.y !== prev.y) {
-      addLog(`Pozisyon değişti: (${newPos.x}, ${newPos.y})`);
-    }
-    return newPos;
-  });
-};
+  const addLog = (message) => {
+    setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} - ${message}`]);
+  };
+
+  const moveForward = () => {
+    setPosition((prev) => {
+      let newPos = { ...prev };
+      if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
+      if (direction === "S") newPos.y = Math.min(prev.y + 1, 19);
+      if (direction === "E") newPos.x = Math.min(prev.x + 1, 19);
+      if (direction === "W") newPos.x = Math.max(prev.x - 1, 0);
+      if (newPos.x !== prev.x || newPos.y !== prev.y) {
+        addLog(`Pozisyon değişti: (${newPos.x}, ${newPos.y})`);
+      }
+      return newPos;
+    });
+  };
 
   const turnLeft = () => {
-  const dirs = ["N", "W", "S", "E"];
-  setDirection((d) => {
-    const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
-    addLog(`Yön değişti: ${newDir}`);
-    return newDir;
-  });
-};
-
+    const dirs = ["N", "W", "S", "E"];
+    setDirection((d) => {
+      const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
+      addLog(`Yön değişti: ${newDir}`);
+      return newDir;
+    });
+  };
 
   const turnRight = () => {
     const dirs = ["N", "E", "S", "W"];
-    setDirection((d) => dirs[(dirs.indexOf(d) + 1) % 4]);
+    setDirection((d) => {
+      const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
+      addLog(`Yön değişti: ${newDir}`);
+      return newDir;
+    });
   };
 
   const stop = () => alert("Robot durdu.");
 
-  const addLog = (message) => {
-  setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} - ${message}`]);
-};
+  useEffect(() => {
+    const key = `${position.x},${position.y}`;
+    setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
 
+    const currentTask = scenario[currentStep];
+    const taskCoords = parsePoint(currentTask);
 
- useEffect(() => {
-  const key = `${position.x},${position.y}`;
-  setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
+    if (position.x === taskCoords.x && position.y === taskCoords.y) {
+      if (currentTask.islem === "al") {
+        setCarrying(true);
+        addLog(`Yük alındı: ${currentTask.nokta}`);
+      } else if (currentTask.islem === "birak") {
+        setCarrying(false);
+        addLog(`Yük bırakıldı: ${currentTask.nokta}`);
+      }
 
-  const currentTask = scenario[currentStep];
-  const taskCoords = parsePoint(currentTask);
+      if (currentStep + 1 < scenario.length) {
+        setCurrentStep(currentStep + 1);
+        addLog(
+          `Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`
+        );
+      }
+    }
 
- if (position.x === taskCoords.x && position.y === taskCoords.y) {
-  if (currentTask.islem === "al") {
-    setCarrying(true);
-    addLog(`Yük alındı: ${currentTask.nokta}`);
-  } else if (currentTask.islem === "birak") {
-    setCarrying(false);
-    addLog(`Yük bırakıldı: ${currentTask.nokta}`);
-  }
+    // QR simülasyonu
+    const qrCode = `Q${position.x}${position.y}`;
+    setQr(qrCode);
+    addLog(`📶 QR okundu: ${qrCode}`);
 
-  if (currentStep + 1 < scenario.length) {
-    setCurrentStep(currentStep + 1);
-    addLog(`Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`);
-  }
-}
-
-}, [position]);
-
+    // RFID sadece belirli noktada tetiklenir
+    if (position.x === 5 && position.y === 5) {
+      if (rfid !== "TAG-XY102") {
+        setRfid("TAG-XY102");
+        addLog("💾 RFID okundu: TAG-XY102");
+      }
+    }
+  }, [position]);
 
   return (
     <div>
@@ -107,19 +121,18 @@ const moveForward = () => {
         activeTask={activeTask}
       />
       <StatusPanel
-  data={{
-    battery: 72,
-    charging: false,
-    barrier: false,
-    x: position.x,
-    y: position.y,
-    direction: direction,
-    qr: "QA4.1",
-    rfid: "TAG-123456",
-    carrying: carrying,
-  }}
-/>
-
+        data={{
+          battery: 72,
+          charging: false,
+          barrier: false,
+          x: position.x,
+          y: position.y,
+          direction: direction,
+          qr: qr,
+          rfid: rfid,
+          carrying: carrying,
+        }}
+      />
       <JoystickPanel
         onForward={moveForward}
         onTurnLeft={turnLeft}
