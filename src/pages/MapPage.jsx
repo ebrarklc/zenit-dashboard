@@ -14,6 +14,20 @@ const MapPage = () => {
   const [logs, setLogs] = useState([]);
   const [qr, setQr] = useState("YOK");
   const [rfid, setRfid] = useState("YOK");
+  const [barrier, setBarrier] = useState(false);
+  const [charging, setCharging] = useState(false);
+
+  // Engel bölgeleri
+  const barriers = [
+    { x: 3, y: 3 },
+    { x: 4, y: 3 },
+    { x: 5, y: 3 },
+  ];
+
+  // Şarj noktaları
+  const chargingStations = [
+    { x: 10, y: 10 },
+  ];
 
   const scenario = [
     { nokta: "A5", islem: "al" },
@@ -26,7 +40,7 @@ const MapPage = () => {
     const number = parseInt(p.nokta.slice(1));
     return {
       x: letter.charCodeAt(0) - 65,
-      y: number - 1
+      y: number - 1,
     };
   };
 
@@ -107,6 +121,17 @@ const MapPage = () => {
         addLog("💾 RFID okundu: TAG-XY102");
       }
     }
+
+    // Engel kontrolü
+    const inBarrier = barriers.some(b => b.x === position.x && b.y === position.y);
+    setBarrier(inBarrier);
+    if (inBarrier) addLog("🚫 Engel bölgesine girildi!");
+
+    // Şarj kontrolü
+    const inCharging = chargingStations.some(s => s.x === position.x && s.y === position.y);
+    setCharging(inCharging);
+    if (inCharging) addLog("🔌 Şarj alanına girildi.");
+
   }, [position]);
 
   return (
@@ -119,12 +144,14 @@ const MapPage = () => {
         visited={visited}
         taskPoints={taskPoints}
         activeTask={activeTask}
+        barriers={barriers}
+        chargingStations={chargingStations}
       />
       <StatusPanel
         data={{
           battery: 72,
-          charging: false,
-          barrier: false,
+          charging: charging,
+          barrier: barrier,
           x: position.x,
           y: position.y,
           direction: direction,
