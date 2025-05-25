@@ -16,15 +16,14 @@ const MapPage = () => {
   const [rfid, setRfid] = useState("YOK");
   const [barrier, setBarrier] = useState(false);
   const [charging, setCharging] = useState(false);
+  const [autoMode, setAutoMode] = useState(false); // 🆕 Otomatik mod
 
-  // Engel bölgeleri
   const barriers = [
     { x: 3, y: 3 },
     { x: 4, y: 3 },
     { x: 5, y: 3 },
   ];
 
-  // Şarj noktaları
   const chargingStations = [
     { x: 10, y: 10 },
   ];
@@ -85,6 +84,34 @@ const MapPage = () => {
 
   const stop = () => alert("Robot durdu.");
 
+  // 🔁 Otomatik olarak görev adımlarına ilerle
+  useEffect(() => {
+    if (!autoMode) return;
+
+    const interval = setInterval(() => {
+      const currentTask = scenario[currentStep];
+      if (!currentTask) {
+        clearInterval(interval);
+        setAutoMode(false);
+        addLog("✅ Senaryo tamamlandı.");
+        return;
+      }
+
+      const taskCoords = parsePoint(currentTask);
+      const dx = taskCoords.x - position.x;
+      const dy = taskCoords.y - position.y;
+
+      if (dx !== 0) {
+        setPosition((prev) => ({ ...prev, x: prev.x + Math.sign(dx) }));
+      } else if (dy !== 0) {
+        setPosition((prev) => ({ ...prev, y: prev.y + Math.sign(dy) }));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoMode, position, currentStep]);
+
+  // 💡 Bütün konum etkilerini buraya yazıyoruz
   useEffect(() => {
     const key = `${position.x},${position.y}`;
     setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
@@ -103,18 +130,14 @@ const MapPage = () => {
 
       if (currentStep + 1 < scenario.length) {
         setCurrentStep(currentStep + 1);
-        addLog(
-          `Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`
-        );
+        addLog(`Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`);
       }
     }
 
-    // QR simülasyonu
     const qrCode = `Q${position.x}${position.y}`;
     setQr(qrCode);
     addLog(`📶 QR okundu: ${qrCode}`);
 
-    // RFID sadece belirli noktada tetiklenir
     if (position.x === 5 && position.y === 5) {
       if (rfid !== "TAG-XY102") {
         setRfid("TAG-XY102");
@@ -122,16 +145,13 @@ const MapPage = () => {
       }
     }
 
-    // Engel kontrolü
     const inBarrier = barriers.some(b => b.x === position.x && b.y === position.y);
     setBarrier(inBarrier);
     if (inBarrier) addLog("🚫 Engel bölgesine girildi!");
 
-    // Şarj kontrolü
     const inCharging = chargingStations.some(s => s.x === position.x && s.y === position.y);
     setCharging(inCharging);
     if (inCharging) addLog("🔌 Şarj alanına girildi.");
-
   }, [position]);
 
   return (
@@ -139,6 +159,28 @@ const MapPage = () => {
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         Harita (Yön: {direction})
       </h2>
+
+      {/* 🆕 Otomatik simülasyon butonu */}
+      <div style={{ textAlign: "center", marginBottom: "10px" }}>
+        <button
+          onClick={() => {
+            setAutoMode(true);
+            addLog("▶️ Otomatik senaryo başlatıldı.");
+          }}
+          style={{
+            backgroundColor: "#3b82f6",
+            color: "#fff",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Simülasyonu Başlat
+        </button>
+      </div>
+
       <ZenitMap
         robotPosition={position}
         visited={visited}
