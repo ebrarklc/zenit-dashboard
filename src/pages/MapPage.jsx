@@ -19,6 +19,11 @@ const MapPage = () => {
   const [autoMode, setAutoMode] = useState(false);
   const [emergencyStop, setEmergencyStop] = useState(false);
 
+  const playSound = (filename) => {
+    const audio = new Audio(`/sounds/${filename}`);
+    audio.play();
+  };
+
   const barriers = [
     { x: 3, y: 3 },
     { x: 4, y: 3 },
@@ -94,6 +99,7 @@ const MapPage = () => {
         clearInterval(interval);
         setAutoMode(false);
         addLog("✅ Senaryo tamamlandı.");
+        playSound("complete.mp3");
         return;
       }
       const taskCoords = parsePoint(currentTask);
@@ -119,9 +125,11 @@ const MapPage = () => {
       if (currentTask.islem === "al") {
         setCarrying(true);
         addLog(`Yük alındı: ${currentTask.nokta}`);
+        playSound("pickup.mp3");
       } else if (currentTask.islem === "birak") {
         setCarrying(false);
         addLog(`Yük bırakıldı: ${currentTask.nokta}`);
+        playSound("drop.mp3");
       }
       if (currentStep + 1 < scenario.length) {
         setCurrentStep(currentStep + 1);
@@ -168,6 +176,25 @@ const MapPage = () => {
           ACİL DURDUR
         </button>
       </div>
+
+      {logs[logs.length - 1]?.includes("Yük alındı") && (
+        <div style={{ color: "green", textAlign: "center", fontSize: "24px", animation: "blink 1s infinite" }}>
+          ✅ YÜK ALINDI!
+        </div>
+      )}
+      {logs[logs.length - 1]?.includes("Yük bırakıldı") && (
+        <div style={{ color: "orange", textAlign: "center", fontSize: "24px", animation: "blink 1s infinite" }}>
+          📦 YÜK BIRAKILDI!
+        </div>
+      )}
+
+      <style>{`
+        @keyframes blink {
+          0% { opacity: 1; }
+          50% { opacity: 0.2; }
+          100% { opacity: 1; }
+        }
+      `}</style>
 
       <ZenitMap robotPosition={position} visited={visited} taskPoints={taskPoints} activeTask={activeTask} barriers={barriers} chargingStations={chargingStations} />
 
