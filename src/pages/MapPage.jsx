@@ -27,12 +27,11 @@ const MapPage = () => {
   const chargingStations = [
     { x: 10, y: 10 },
   ];
-
-  const scenario = [
-    { nokta: "A5", islem: "al" },
-    { nokta: "G6", islem: "birak" },
-    { nokta: "B9", islem: "al" },
-  ];
+const [scenario, setScenario] = useState([
+  { nokta: "A5", islem: "al" },
+  { nokta: "G6", islem: "birak" },
+  { nokta: "B9", islem: "al" },
+]);
 
   const parsePoint = (p) => {
     const letter = p.nokta[0].toUpperCase();
@@ -189,6 +188,53 @@ const MapPage = () => {
         barriers={barriers}
         chargingStations={chargingStations}
       />
+      <button
+  onClick={() => {
+    const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "senaryo.json";
+    link.click();
+    addLog("💾 Senaryo indirildi.");
+  }}
+  style={{
+    margin: "10px",
+    padding: "10px 15px",
+    backgroundColor: "#22c55e",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  }}
+>
+  Senaryoyu Kaydet
+</button>
+<input
+  type="file"
+  accept=".json"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (Array.isArray(imported)) {
+          setScenario(imported);
+          setCurrentStep(0);
+          addLog("📥 Senaryo yüklendi.");
+        } else {
+          alert("Geçersiz dosya!");
+        }
+      } catch (err) {
+        alert("Yükleme başarısız!");
+      }
+    };
+    reader.readAsText(file);
+  }}
+  style={{ marginLeft: "10px" }}
+/>
+
+
       <StatusPanel
         data={{
           battery: 72,
