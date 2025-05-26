@@ -16,7 +16,8 @@ const MapPage = () => {
   const [rfid, setRfid] = useState("YOK");
   const [barrier, setBarrier] = useState(false);
   const [charging, setCharging] = useState(false);
-  const [autoMode, setAutoMode] = useState(false); // 🆕 Otomatik mod
+  const [autoMode, setAutoMode] = useState(false);
+  const [emergencyStop, setEmergencyStop] = useState(false);
 
   const barriers = [
     { x: 3, y: 3 },
@@ -24,22 +25,18 @@ const MapPage = () => {
     { x: 5, y: 3 },
   ];
 
-  const chargingStations = [
-    { x: 10, y: 10 },
-  ];
-const [scenario, setScenario] = useState([
-  { nokta: "A5", islem: "al" },
-  { nokta: "G6", islem: "birak" },
-  { nokta: "B9", islem: "al" },
-]);
+  const chargingStations = [{ x: 10, y: 10 }];
+
+  const [scenario, setScenario] = useState([
+    { nokta: "A5", islem: "al" },
+    { nokta: "G6", islem: "birak" },
+    { nokta: "B9", islem: "al" },
+  ]);
 
   const parsePoint = (p) => {
     const letter = p.nokta[0].toUpperCase();
     const number = parseInt(p.nokta.slice(1));
-    return {
-      x: letter.charCodeAt(0) - 65,
-      y: number - 1,
-    };
+    return { x: letter.charCodeAt(0) - 65, y: number - 1 };
   };
 
   const taskPoints = scenario.map(parsePoint);
@@ -50,6 +47,7 @@ const [scenario, setScenario] = useState([
   };
 
   const moveForward = () => {
+    if (emergencyStop) return;
     setPosition((prev) => {
       let newPos = { ...prev };
       if (direction === "N") newPos.y = Math.max(prev.y - 1, 0);
@@ -64,6 +62,7 @@ const [scenario, setScenario] = useState([
   };
 
   const turnLeft = () => {
+    if (emergencyStop) return;
     const dirs = ["N", "W", "S", "E"];
     setDirection((d) => {
       const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
@@ -73,6 +72,7 @@ const [scenario, setScenario] = useState([
   };
 
   const turnRight = () => {
+    if (emergencyStop) return;
     const dirs = ["N", "E", "S", "W"];
     setDirection((d) => {
       const newDir = dirs[(dirs.indexOf(d) + 1) % 4];
@@ -81,12 +81,13 @@ const [scenario, setScenario] = useState([
     });
   };
 
-  const stop = () => alert("Robot durdu.");
+  const stop = () => {
+    if (emergencyStop) return;
+    alert("Robot durdu.");
+  };
 
-  // 🔁 Otomatik olarak görev adımlarına ilerle
   useEffect(() => {
-    if (!autoMode) return;
-
+    if (!autoMode || emergencyStop) return;
     const interval = setInterval(() => {
       const currentTask = scenario[currentStep];
       if (!currentTask) {
@@ -95,22 +96,18 @@ const [scenario, setScenario] = useState([
         addLog("✅ Senaryo tamamlandı.");
         return;
       }
-
       const taskCoords = parsePoint(currentTask);
       const dx = taskCoords.x - position.x;
       const dy = taskCoords.y - position.y;
-
       if (dx !== 0) {
         setPosition((prev) => ({ ...prev, x: prev.x + Math.sign(dx) }));
       } else if (dy !== 0) {
         setPosition((prev) => ({ ...prev, y: prev.y + Math.sign(dy) }));
       }
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [autoMode, position, currentStep]);
+  }, [autoMode, emergencyStop, position, currentStep]);
 
-  // 💡 Bütün konum etkilerini buraya yazıyoruz
   useEffect(() => {
     const key = `${position.x},${position.y}`;
     setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
@@ -126,7 +123,6 @@ const [scenario, setScenario] = useState([
         setCarrying(false);
         addLog(`Yük bırakıldı: ${currentTask.nokta}`);
       }
-
       if (currentStep + 1 < scenario.length) {
         setCurrentStep(currentStep + 1);
         addLog(`Görev ilerletildi: ${scenario[currentStep + 1].nokta} (${scenario[currentStep + 1].islem})`);
@@ -155,105 +151,29 @@ const [scenario, setScenario] = useState([
 
   return (
     <div>
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        Harita (Yön: {direction})
-      </h2>
-
-      {/* 🆕 Otomatik simülasyon butonu */}
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>Harita (Yön: {direction})</h2>
       <div style={{ textAlign: "center", marginBottom: "10px" }}>
-        <button
-          onClick={() => {
-            setAutoMode(true);
-            addLog("▶️ Otomatik senaryo başlatıldı.");
-          }}
-          style={{
-            backgroundColor: "#3b82f6",
-            color: "#fff",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
+        <button onClick={() => {
+          setAutoMode(true);
+          setEmergencyStop(false);
+          addLog("▶️ Otomatik senaryo başlatıldı.");
+        }} style={{ backgroundColor: "#3b82f6", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
           Simülasyonu Başlat
+        </button>
+        <button onClick={() => {
+          setEmergencyStop(true);
+          setAutoMode(false);
+          addLog("❌ Acil Durdurma Uygulandı!");
+        }} style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", marginLeft: "10px" }}>
+          ACİL DURDUR
         </button>
       </div>
 
-      <ZenitMap
-        robotPosition={position}
-        visited={visited}
-        taskPoints={taskPoints}
-        activeTask={activeTask}
-        barriers={barriers}
-        chargingStations={chargingStations}
-      />
-      <button
-  onClick={() => {
-    const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "senaryo.json";
-    link.click();
-    addLog("💾 Senaryo indirildi.");
-  }}
-  style={{
-    margin: "10px",
-    padding: "10px 15px",
-    backgroundColor: "#22c55e",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  }}
->
-  Senaryoyu Kaydet
-</button>
-<input
-  type="file"
-  accept=".json"
-  onChange={(e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target.result);
-        if (Array.isArray(imported)) {
-          setScenario(imported);
-          setCurrentStep(0);
-          addLog("📥 Senaryo yüklendi.");
-        } else {
-          alert("Geçersiz dosya!");
-        }
-      } catch (err) {
-        alert("Yükleme başarısız!");
-      }
-    };
-    reader.readAsText(file);
-  }}
-  style={{ marginLeft: "10px" }}
-/>
+      <ZenitMap robotPosition={position} visited={visited} taskPoints={taskPoints} activeTask={activeTask} barriers={barriers} chargingStations={chargingStations} />
 
+      <StatusPanel data={{ battery: 72, charging, barrier, x: position.x, y: position.y, direction, qr, rfid, carrying }} />
 
-      <StatusPanel
-        data={{
-          battery: 72,
-          charging: charging,
-          barrier: barrier,
-          x: position.x,
-          y: position.y,
-          direction: direction,
-          qr: qr,
-          rfid: rfid,
-          carrying: carrying,
-        }}
-      />
-      <JoystickPanel
-        onForward={moveForward}
-        onTurnLeft={turnLeft}
-        onTurnRight={turnRight}
-        onStop={stop}
-      />
+      <JoystickPanel onForward={moveForward} onTurnLeft={turnLeft} onTurnRight={turnRight} onStop={stop} />
       <EmergencyPanel />
       <LogPanel logs={logs} />
     </div>
