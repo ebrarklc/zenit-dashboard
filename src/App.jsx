@@ -6,6 +6,8 @@ import MapPage from "./pages/MapPage";
 import ScenarioPage from "./pages/ScenarioPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const App = () => {
@@ -19,6 +21,8 @@ const App = () => {
         </Route>
       </Routes>
       <ToastContainer position="top-center" />
+      <ToastContainer position="bottom-right" autoClose={3000} />
+
 
     </Router>
   );

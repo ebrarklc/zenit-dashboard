@@ -4,6 +4,8 @@ import JoystickPanel from "../components/JoystickPanel";
 import EmergencyPanel from "../components/EmergencyPanel";
 import StatusPanel from "../components/StatusPanel";
 import LogPanel from "../components/LogPanel";
+import { toast } from 'react-toastify';
+
 
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 1, y: 1 });
@@ -125,11 +127,15 @@ const MapPage = () => {
       if (currentTask.islem === "al") {
         setCarrying(true);
         addLog(`Yük alındı: ${currentTask.nokta}`);
-        playSound("pickup.mp3");
+playSound("pickup.mp3");
+toast.success("✅ Yük alındı!");
+
       } else if (currentTask.islem === "birak") {
         setCarrying(false);
-        addLog(`Yük bırakıldı: ${currentTask.nokta}`);
-        playSound("drop.mp3");
+       addLog(`Yük bırakıldı: ${currentTask.nokta}`);
+playSound("drop.mp3");
+toast.info("📦 Yük bırakıldı!");
+
       }
       if (currentStep + 1 < scenario.length) {
         setCurrentStep(currentStep + 1);
@@ -171,7 +177,9 @@ const MapPage = () => {
         <button onClick={() => {
           setEmergencyStop(true);
           setAutoMode(false);
-          addLog("❌ Acil Durdurma Uygulandı!");
+        addLog("❌ Acil Durdurma Uygulandı!");
+toast.error("❌ Acil durdurma uygulandı!");
+
         }} style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", marginLeft: "10px" }}>
           ACİL DURDUR
         </button>
