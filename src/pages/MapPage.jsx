@@ -5,6 +5,8 @@ import EmergencyPanel from "../components/EmergencyPanel";
 import StatusPanel from "../components/StatusPanel";
 import LogPanel from "../components/LogPanel";
 import { toast } from 'react-toastify';
+import ScenarioPanel from "../components/ScenarioPanel";
+
 
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 1, y: 1 });
@@ -232,6 +234,8 @@ const MapPage = () => {
       <JoystickPanel onForward={moveForward} onTurnLeft={turnLeft} onTurnRight={turnRight} onStop={stop} />
       <EmergencyPanel />
       <LogPanel logs={logs} />
+      <ScenarioPanel scenario={scenario} setScenario={setScenario} />
+
     </div>
   );
 };

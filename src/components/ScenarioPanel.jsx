@@ -64,10 +64,9 @@ const ListItem = styled.li`
   font-weight: ${({ isActive }) => (isActive ? "bold" : "normal")};
 `;
 
-const ScenarioPanel = () => {
+const ScenarioPanel = ({ scenario, setScenario }) => {
   const [point, setPoint] = useState("");
   const [action, setAction] = useState("al");
-  const [tasks, setTasks] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleAdd = () => {
@@ -77,14 +76,14 @@ const ScenarioPanel = () => {
     }
 
     const task = { nokta: point.toUpperCase(), islem: action };
-    setTasks([...tasks, task]);
+    setScenario([...scenario, task]);
     setPoint("");
     setAction("al");
     toast.success("Görev eklendi!");
   };
 
   const handleNext = () => {
-    if (currentStep + 1 < tasks.length) {
+    if (currentStep + 1 < scenario.length) {
       setCurrentStep((prev) => prev + 1);
     } else {
       toast.info("🎉 Tüm görevler tamamlandı!");
@@ -108,10 +107,10 @@ const ScenarioPanel = () => {
         <Button onClick={handleAdd}>Ekle</Button>
       </Row>
 
-      {tasks.length > 0 && (
+      {scenario.length > 0 && (
         <>
           <List>
-            {tasks.map((t, index) => (
+            {scenario.map((t, index) => (
               <ListItem key={index} isActive={index === currentStep}>
                 {index + 1}. Nokta: {t.nokta}, İşlem: {t.islem.toUpperCase()}
               </ListItem>
