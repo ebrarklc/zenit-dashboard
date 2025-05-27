@@ -120,27 +120,51 @@ const MapPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!autoMode || emergencyStop) return;
-    const interval = setInterval(() => {
-      const currentTask = scenario[currentStep];
-      if (!currentTask) {
-        clearInterval(interval);
-        setAutoMode(false);
-        addLog("✅ Senaryo tamamlandı.");
-        playSound("complete.mp3");
-        return;
-      }
-      const taskCoords = parsePoint(currentTask);
-      const dx = taskCoords.x - position.x;
-      const dy = taskCoords.y - position.y;
-      if (dx !== 0) {
-        setPosition((prev) => ({ ...prev, x: prev.x + Math.sign(dx) }));
-      } else if (dy !== 0) {
-        setPosition((prev) => ({ ...prev, y: prev.y + Math.sign(dy) }));
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [autoMode, emergencyStop, position, currentStep]);
+  if (!autoMode || emergencyStop) return;
+
+  const interval = setInterval(() => {
+    // Engel kontrolü
+    const inBarrier = barriers.some(b => b.x === position.x && b.y === position.y);
+    if (inBarrier) {
+      setAutoMode(false);
+      toast.error("🚧 Engel tespit edildi, simülasyon durduruldu!");
+      addLog("🚧 Engel algılandı, otomatik mod kapatıldı.");
+      playSound("barrier.mp3");
+      clearInterval(interval);
+      return;
+    }
+
+    // Şarj kontrolü
+    const inCharging = chargingStations.some(s => s.x === position.x && s.y === position.y);
+    if (inCharging) {
+      toast.info("🔌 Şarj alanına girildi.");
+      playSound("charging.mp3");
+    }
+
+    const currentTask = scenario[currentStep];
+    if (!currentTask) {
+      clearInterval(interval);
+      setAutoMode(false);
+      addLog("✅ Senaryo tamamlandı.");
+      toast.success("🎉 Tüm görevler başarıyla tamamlandı!");
+      playSound("complete.mp3");
+      return;
+    }
+
+    const taskCoords = parsePoint(currentTask);
+    const dx = taskCoords.x - position.x;
+    const dy = taskCoords.y - position.y;
+
+    if (dx !== 0) {
+      setPosition((prev) => ({ ...prev, x: prev.x + Math.sign(dx) }));
+    } else if (dy !== 0) {
+      setPosition((prev) => ({ ...prev, y: prev.y + Math.sign(dy) }));
+    }
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [autoMode, emergencyStop, position, currentStep]);
+
 
   useEffect(() => {
     const key = `${position.x},${position.y}`;
@@ -234,7 +258,14 @@ const MapPage = () => {
       <JoystickPanel onForward={moveForward} onTurnLeft={turnLeft} onTurnRight={turnRight} onStop={stop} />
       <EmergencyPanel />
       <LogPanel logs={logs} />
-      <ScenarioPanel scenario={scenario} setScenario={setScenario} />
+     <ScenarioPanel
+  scenario={scenario}
+  setScenario={setScenario}
+  currentStep={currentStep}
+  setCurrentStep={setCurrentStep}
+  autoMode={autoMode}
+/>
+
 
     </div>
   );

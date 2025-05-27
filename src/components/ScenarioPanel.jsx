@@ -48,6 +48,11 @@ const Button = styled.button`
       background-color: #2563eb;
     }
   }
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 `;
 
 const List = styled.ul`
@@ -67,10 +72,9 @@ const ListItem = styled.li`
   align-items: center;
 `;
 
-const ScenarioPanel = ({ scenario, setScenario }) => {
+const ScenarioPanel = ({ scenario, setScenario, currentStep, setCurrentStep, autoMode }) => {
   const [point, setPoint] = useState("");
   const [action, setAction] = useState("al");
-  const [currentStep, setCurrentStep] = useState(0);
 
   const handleAdd = () => {
     if (!point) {
@@ -86,6 +90,11 @@ const ScenarioPanel = ({ scenario, setScenario }) => {
   };
 
   const handleNext = () => {
+    if (autoMode) {
+      toast.warn("🛑 Otomatik mod açıkken manuel geçiş yapılamaz.");
+      return;
+    }
+
     if (currentStep + 1 < scenario.length) {
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -171,7 +180,6 @@ const ScenarioPanel = ({ scenario, setScenario }) => {
           <Button className="next" onClick={handleNext}>
             Sonraki Adım
           </Button>
-
           <Row>
             <Button onClick={handleDownload}>Senaryoyu Kaydet</Button>
             <input type="file" accept=".json" onChange={handleUpload} />
