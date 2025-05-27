@@ -6,7 +6,6 @@ import StatusPanel from "../components/StatusPanel";
 import LogPanel from "../components/LogPanel";
 import { toast } from 'react-toastify';
 
-
 const MapPage = () => {
   const [position, setPosition] = useState({ x: 1, y: 1 });
   const [visited, setVisited] = useState([]);
@@ -18,6 +17,7 @@ const MapPage = () => {
   const [rfid, setRfid] = useState("YOK");
   const [barrier, setBarrier] = useState(false);
   const [charging, setCharging] = useState(false);
+  const [battery, setBattery] = useState(72);
   const [autoMode, setAutoMode] = useState(false);
   const [emergencyStop, setEmergencyStop] = useState(false);
 
@@ -94,6 +94,30 @@ const MapPage = () => {
   };
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      fetch("http://localhost:8080/api/status")
+        .then((res) => res.json())
+        .then((data) => {
+          setPosition({ x: data.x, y: data.y });
+          setDirection(data.direction);
+          setQr(data.qr);
+          setRfid(data.rfid);
+          setCarrying(data.carrying);
+          setBarrier(data.barrier);
+          setCharging(data.charging);
+          setBattery(data.battery);
+          addLog("🔄 Robot durumu güncellendi");
+        })
+        .catch((err) => {
+          console.error("Veri alınamadı:", err);
+          addLog("⚠️ Backend'den veri alınamadı.");
+        });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!autoMode || emergencyStop) return;
     const interval = setInterval(() => {
       const currentTask = scenario[currentStep];
@@ -127,15 +151,13 @@ const MapPage = () => {
       if (currentTask.islem === "al") {
         setCarrying(true);
         addLog(`Yük alındı: ${currentTask.nokta}`);
-playSound("pickup.mp3");
-toast.success("✅ Yük alındı!");
-
+        playSound("pickup.mp3");
+        toast.success("✅ Yük alındı!");
       } else if (currentTask.islem === "birak") {
         setCarrying(false);
-       addLog(`Yük bırakıldı: ${currentTask.nokta}`);
-playSound("drop.mp3");
-toast.info("📦 Yük bırakıldı!");
-
+        addLog(`Yük bırakıldı: ${currentTask.nokta}`);
+        playSound("drop.mp3");
+        toast.info("📦 Yük bırakıldı!");
       }
       if (currentStep + 1 < scenario.length) {
         setCurrentStep(currentStep + 1);
@@ -177,9 +199,8 @@ toast.info("📦 Yük bırakıldı!");
         <button onClick={() => {
           setEmergencyStop(true);
           setAutoMode(false);
-        addLog("❌ Acil Durdurma Uygulandı!");
-toast.error("❌ Acil durdurma uygulandı!");
-
+          addLog("❌ Acil Durdurma Uygulandı!");
+          toast.error("❌ Acil durdurma uygulandı!");
         }} style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", marginLeft: "10px" }}>
           ACİL DURDUR
         </button>
@@ -206,7 +227,7 @@ toast.error("❌ Acil durdurma uygulandı!");
 
       <ZenitMap robotPosition={position} visited={visited} taskPoints={taskPoints} activeTask={activeTask} barriers={barriers} chargingStations={chargingStations} />
 
-      <StatusPanel data={{ battery: 72, charging, barrier, x: position.x, y: position.y, direction, qr, rfid, carrying }} />
+      <StatusPanel data={{ battery, charging, barrier, x: position.x, y: position.y, direction, qr, rfid, carrying }} />
 
       <JoystickPanel onForward={moveForward} onTurnLeft={turnLeft} onTurnRight={turnRight} onStop={stop} />
       <EmergencyPanel />
