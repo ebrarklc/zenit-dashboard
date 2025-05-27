@@ -62,6 +62,9 @@ const ListItem = styled.li`
   padding: 8px;
   border-radius: 6px;
   font-weight: ${({ isActive }) => (isActive ? "bold" : "normal")};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const ScenarioPanel = ({ scenario, setScenario }) => {
@@ -90,6 +93,42 @@ const ScenarioPanel = ({ scenario, setScenario }) => {
     }
   };
 
+  const handleRemove = (index) => {
+    const updated = [...scenario];
+    updated.splice(index, 1);
+    setScenario(updated);
+    toast.info("Görev silindi.");
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "senaryo.json";
+    link.click();
+  };
+
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (Array.isArray(data)) {
+          setScenario(data);
+          toast.success("Senaryo yüklendi!");
+        } else {
+          toast.error("Geçersiz dosya formatı!");
+        }
+      } catch (err) {
+        toast.error("Yükleme sırasında hata oluştu.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <Panel>
       <h3>Senaryo Oluştur</h3>
@@ -113,12 +152,30 @@ const ScenarioPanel = ({ scenario, setScenario }) => {
             {scenario.map((t, index) => (
               <ListItem key={index} isActive={index === currentStep}>
                 {index + 1}. Nokta: {t.nokta}, İşlem: {t.islem.toUpperCase()}
+                <button
+                  onClick={() => handleRemove(index)}
+                  style={{
+                    marginLeft: "10px",
+                    color: "red",
+                    fontWeight: "bold",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  ✖
+                </button>
               </ListItem>
             ))}
           </List>
           <Button className="next" onClick={handleNext}>
             Sonraki Adım
           </Button>
+
+          <Row>
+            <Button onClick={handleDownload}>Senaryoyu Kaydet</Button>
+            <input type="file" accept=".json" onChange={handleUpload} />
+          </Row>
         </>
       )}
     </Panel>
